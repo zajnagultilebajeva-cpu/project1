@@ -1,0 +1,23 @@
+.cart__btns{
+    width: 25px;
+    height: 25px;
+    border-radius: 100%;
+    border: none;
+    cursor: pointer;
+}
+.quantity{
+    margin: 3px 10px;
+}
+.sum_and_del{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 30px;
+    padding: 0 15px;
+}
+.total__price{
+    color: rgb(46, 30, 34);
+    font-weight: 600;
+    font-size: 17px;
+    font-family: "Montserrat", sans-serif;
+}

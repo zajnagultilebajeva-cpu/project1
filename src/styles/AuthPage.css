@@ -1,0 +1,106 @@
+
+#auth-form {
+  position: absolute;
+  height: 300px;
+  width: 450px;
+  top: 50%;
+  left: 50%;
+  margin-top: -100px;
+  margin-left: -200px;
+  padding: 0;
+}
+#auth-form .input-group {margin-bottom: 10px;}
+#auth-form .panel-body {text-align: center;}
+/* Контейнер */
+
+/* Header */
+.card_header {
+  font-size: 26px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 40px;
+  font-family: "Montserrat", sans-serif;
+}
+
+/* Body */
+.card_body {
+  width: 100%;
+}
+
+/* Form */
+.panel_body {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Input контейнер */
+.input_group,
+.input-group {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fafafa;
+  transition: 0.2s;
+}
+
+
+/* Focus эффект */
+.input_group:focus-within,
+.input-group:focus-within {
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25,118,210,0.1);
+}
+
+/* Иконка */
+.input_group_text,
+.input-group-text {
+  font-family: "Montserrat", sans-serif;
+  padding: 10px 12px;
+  background: transparent;
+  color: #777;
+}
+.fa_user{
+    width: 20px;
+    height: 20px;
+    margin-top: 5px;
+    font-family: "Montserrat", sans-serif;
+}
+
+/* Input */
+.form-control {
+  border: none;
+  outline: none;
+  flex: 1;
+  padding: 10px;
+  background: transparent;
+  font-size: 14px;
+     font-family: "Montserrat", sans-serif;
+}
+
+/* Кнопка */
+.btn {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  background: #1976d2;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-family: "Montserrat", sans-serif;
+  transition: 0.2s;
+}
+
+/* Hover */
+.btn:hover {
+  background: #125ea8;
+  transform: translateY(-1px);
+}
+
+/* Active */
+.btn:active {
+  transform: scale(0.98);
+}

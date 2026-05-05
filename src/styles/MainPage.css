@@ -1,0 +1,246 @@
+.main{
+    background: rgb(250, 250, 250);
+    min-height: 100vh;
+    width: 100%;
+    max-width: 1400px;
+}
+
+ @keyframes slidy {
+    0% { left: 0%; }
+    20% { left: 0%; }
+    25% { left: -100%; }
+    45% { left: -100%; }
+    50% { left: -200%; }
+    70% { left: -200%; }
+    75% { left: -300%; }
+    95% { left: -300%; }
+    100% { left: -400%; }
+}
+
+div#slider {
+  overflow: hidden;
+  width: 100%;
+  max-width: 1380px; 
+  height: 400px;
+  margin: 25px auto;
+  border-radius: 15px;
+  position: relative;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  background: linear-gradient(135deg, #111, #333);
+}
+
+div#slider figure { 
+  position: relative;
+  width: 500%;
+  margin: 0;
+  left: 0;
+  text-align: left;
+  font-size: 0;
+  animation: 20s slidy infinite linear; 
+  height: 100%;
+}
+
+div#slider figure img {
+  width: 20%;
+  float: left;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.85);
+}
+
+.products{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.card{
+    width: 335px;
+    height: 480px;
+    background-color: rgb(211, 216, 215);
+    border-radius: 20px;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
+}
+
+
+.card_image {
+    width: 100%;
+    height: 260px;
+    object-fit: cover;
+    border-radius: 10px 10px 0 0;
+
+    transition: transform 0.3s ease;
+}
+
+
+.card:hover .card {
+    transform: scale(1.05);
+}
+
+.card_title{
+    width: 300px;
+    color: rgb(52, 37, 68);
+    font-size: 20px;
+    font-family: "Montserrat", sans-serif;
+    text-align: start;
+    padding-top: 5px;
+}
+
+
+.card_descript{
+    color: rgb(123, 109, 136);
+    font-size: 12px;
+    font-family: "Montserrat", sans-serif;
+    text-align: start;
+    padding-left: 13px;
+    padding-top: 10px;
+}
+
+
+.card_price{
+    color: rgb(8, 162, 29);
+    font-size: 20px;
+    font-weight: 500;
+    font-family: "Montserrat", sans-serif;
+    text-align: start;
+}
+
+
+.card_btn:hover {
+    background-color: rgb(6, 140, 24);
+    transform: scale(1.05);
+}
+
+.card_btn:active {
+    transform: scale(0.95);
+}
+/* Контейнер */
+.brand-section {
+  padding: 50px 0;
+  background-color: #ffffff; 
+  overflow: hidden;
+  margin: 30px 0;
+}
+
+.brand-title {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 40px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-family: sans-serif;
+}
+
+.brand-slider {
+  display: flex;
+  width: 100%;
+  position: relative;
+}
+
+.brand-track {
+  display: flex;
+  width: calc(250px * 12); 
+  animation: scroll 25s linear infinite;
+}
+
+.brand-item {
+  width: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 30px;
+}
+
+.brand-item img {
+  max-width: 130px;
+  height: auto;
+  opacity: 0.5;
+  filter: grayscale(100%);
+  transition: all 0.3s ease-in-out;
+}
+.brand-item img:hover {
+  filter: grayscale(0%);
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+@keyframes scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-250px * 6)); }
+}
+
+@media (max-width: 430px) {
+  .brand-section {
+    padding: 30px 0;
+  }
+  
+  .brand-title {
+    font-size: 15px;
+    margin-bottom: 25px;
+  }
+
+  .brand-item {
+    width: 150px;
+    padding: 0 15px;
+  }
+
+  .brand-item img {
+    max-width: 90px;
+    filter: grayscale(0%);
+    opacity: 0.8;
+  }
+
+  @keyframes scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(calc(-150px * 6)); }
+  }
+}
+
+
+@media (max-width: 430px) {
+
+    .hero {
+        flex-direction: column;
+        height: auto;
+        padding: 15px;
+        text-align: center;
+    }
+
+    .hero_content h1 {
+        font-size: 20px;
+    }
+
+    .hero_content p {
+        font-size: 13px;
+    }
+
+    .hero_btn {
+        width: 100%;
+    }
+
+    .products {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .card {
+        width: 95%;
+        height: auto;
+    }
+
+    .card_title {
+        width: 100%;
+        font-size: 18px;
+    }
+
+    .card_btn {
+        width: 100%;
+    }
+}

@@ -185,6 +185,7 @@ const MainPage = ({ darkMode }) => {
     const [category, setCategory] = useState(
         localStorage.getItem("category") || "All"
     )
+    
     const [filtered, setFiltered] = useState(kepkaData)
     const [cart, setCart] = useState(JSON.parse(localStorage.getItem('cart')) || [])
     useEffect(() => {
@@ -194,10 +195,6 @@ const MainPage = ({ darkMode }) => {
             document.body.classList.remove("dark");
         }
     }, [darkMode])
-    useEffect(() => {
-        const savedSearch = localStorage.getItem("search") || ""
-        setSearch(savedSearch)
-    }, [])
     useEffect(() => {
         const result = kepkaData.filter(item => {
             const matchSearch = item.description

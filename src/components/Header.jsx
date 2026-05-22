@@ -130,6 +130,10 @@ function Header({ darkMode, setDarkMode }) {
                             onClick={() => chakyruu('/map')}>
                                 Дарек
                         </li>
+                        {/* <li className="header_div2_li"
+                            onClick={() => chakyruu('/creat')}>
+                                Продукт түзүү
+                        </li> */}
                     </ul>
 
                 </div>

@@ -1,7 +1,5 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { signInWithEmailAndPassword } from 'firebase/auth'
-import { auth } from '../Firebase'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
@@ -10,38 +8,57 @@ const LoginPage = () => {
   const [password, setPassword] = useState('')
   const navigate = useNavigate()
 
-  const handleLogin = async () => {
+  const ADMIN_EMAIL = "zajnagultilebajeva@gmail.com"
+  const ADMIN_PASSWORD = "kepka.kg"
+
+  const handleLogin = () => {
     if (!email || !password) {
       toast.warn('Бардык талааларды толтуруңуз!')
       return
     }
 
-    try {
-      const response = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      )
+    const trimmedEmail = email.trim();
 
-      localStorage.setItem('email', response.user.email)
+    if (trimmedEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      localStorage.setItem('email', trimmedEmail);
+      localStorage.setItem('currentUser', JSON.stringify({ role: 'admin', email: trimmedEmail }));
+      
+      toast.success('Куш келиңиз, Администратор!');
+      setTimeout(() => {
+        navigate('/base')
+      }, 1500);
+      return;
+    }
 
-      toast.success('Ийгиликтүү кирдиңиз!')
+    const existingUsers = JSON.parse(localStorage.getItem('registeredUsers')) || [];
+    const user = existingUsers.find(u => u.email === trimmedEmail && u.password === password);
 
+    if (user) {
+      localStorage.setItem('email', user.email);
+      localStorage.setItem('currentUser', JSON.stringify({ role: 'user', email: user.email }));
+      
+      toast.success('Ийгиликтүү кирдиңиз!');
       setTimeout(() => {
         navigate('/')
-        setEmail('')
-        setPassword('')
-      }, 1500)
-    } catch (error) {
-      console.error(error)
-      toast.error('Мындай колдонуучу табылган жок же пароль ката!')
+      }, 1500);
+    } else {
+      
+      const newUser = { email: trimmedEmail, password: password, role: 'user' };
+      existingUsers.push(newUser);
+      localStorage.setItem('registeredUsers', JSON.stringify(existingUsers));
+      
+      localStorage.setItem('email', trimmedEmail);
+      localStorage.setItem('currentUser', JSON.stringify({ role: 'user', email: trimmedEmail }));
+      
+      toast.success('Жаңы колдонуучу катары катталдыңыз жана кирдиңиз!');
+      setTimeout(() => navigate('/'), 1500);
     }
   }
   
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h1 style={styles.title}>Башкаруу панели</h1>
+        <h1 style={styles.title}>Кирүү панели</h1>
         <input
           type="email"
           placeholder="Почта"
@@ -63,34 +80,32 @@ const LoginPage = () => {
         </button>
       </div>
 
-      <ToastContainer  autoClose={2000} />
+      <ToastContainer autoClose={2000} position="top-center" />
     </div>
   )
 }
 
 const styles = {
   container: {
-    minHeight: '50vh',
+    minHeight: '100vh',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
     background: '#f5f5f5',
     padding: '20px',
-    boxSizing: 'border-box',
+    boxSizing: 'border-box'
   },
-
   card: {
     width: '100%',
     maxWidth: '420px',
     background: '#fff',
     borderRadius: '22px',
     padding: '35px 25px',
-    marginRight:'-40%',
     boxShadow: '0 5px 25px rgba(0,0,0,0.08)',
     border: '1px solid #ececec',
     boxSizing: 'border-box',
+    marginTop: '20px'
   },
-
   title: {
     margin: 0,
     textAlign: 'center',
@@ -99,23 +114,6 @@ const styles = {
     color: '#111',
     fontFamily: '"Montserrat", sans-serif'
   },
-
-  subtitle: {
-    textAlign: 'center',
-    color: '#777',
-    marginTop: '10px',
-    marginBottom: '30px',
-    fontSize: '15px',
-    lineHeight: '22px',
-    fontFamily: '"Montserrat", sans-serif'
-  },
-
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '18px',
-  },
-
   input: {
     width: '100%',
     height: '56px',
@@ -126,10 +124,8 @@ const styles = {
     outline: 'none',
     background: '#fafafa',
     boxSizing: 'border-box',
-    marginTop:'20px'
-    
+    marginTop: '20px'
   },
-
   button: {
     width: '100%',
     height: '56px',
@@ -140,10 +136,8 @@ const styles = {
     fontSize: '16px',
     fontWeight: '600',
     cursor: 'pointer',
-    marginTop: '8px',
-    marginTop:'20px'
+    marginTop: '20px'
   },
 }
 
-
-export default LoginPage
+export default LoginPage;

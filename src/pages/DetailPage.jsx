@@ -94,7 +94,6 @@ const DetailPage = () => {
         setSelectImg(images)
     }
     
-    
     useEffect(() => {
         if (product) {
             setSelectImg(product.images[0])

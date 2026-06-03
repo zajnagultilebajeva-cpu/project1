@@ -1,58 +1,163 @@
+/* Жалпы стилдер (Компьютер жана планшеттер үчүн) */
 .about {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: rgb(211, 216, 215);
-  padding: 100px;
+    width: 100%;
+    padding: 60px 20px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    background-color: #ffff;
+    transition: background 0.3s ease;
+}
+
+/* Түнкү режим үчүн */
+body.dark .about {
+    background-color: #121212;
 }
 
 .about-container {
-  max-width: 700px;
-  background: white;
-  padding: 35px;
-  border-radius: 15px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-  text-align: center;
+    max-width: 800px; /* Текстти окууга ыңгайлуу узундук */
+    width: 100%;
+    margin: 0 auto;
+    font-family: "Montserrat", sans-serif;
 }
 
 .about-title {
-  font-size: 28px;
-  margin-bottom: 15px;
-  font-family: "Montserrat", sans-serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 25px;
+    position: relative;
 }
-
-.about-text {
-  font-size: 16px;
-  margin-bottom: 10px;
-  line-height: 1.5;
-  color: #333;
-  font-family: "Montserrat", sans-serif;
+body.dark .about-title {
+    color: #fff;
 }
 
 .about-subtitle {
-  margin-top: 20px;
-  font-size: 20px;
-  font-family: "Montserrat", sans-serif;
+    font-size: 24px;
+    font-weight: 600;
+    color: rgb(212, 212, 82);
+    margin-top: 35px;
+    margin-bottom: 15px;
+}
+
+.about-text {
+    font-size: 16px;
+    line-height: 1.7;
+    color: #555;
+    margin-bottom: 20px;
+    text-align: justify;
+}
+body.dark .about-text {
+    color: #bbb;
+}
+
+.about-features {
+    background-color: #f9f9f9;
+    padding: 20px 25px;
+    border-radius: 12px;
+    margin: 30px 0;
+    border-left: 4px solid rgb(212, 212, 82);
+}
+body.dark .about-features {
+    background-color: #1e1e1e;
+}
+
+.about-features-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #222;
+}
+body.dark .about-features-title {
+    color: #fff;
 }
 
 .about-list {
-  width: 500px;
-  list-style: none;
-  padding: 0;
-  margin-top: 10px;
-  font-family: "Montserrat", sans-serif;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .about-list li {
-  margin: 6px 0;
-  font-size: 15px;
-  font-family: "Montserrat", sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #444;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+body.dark .about-list li {
+    color: #ccc;
+}
+
+.about-list .icon {
+    color: rgb(212, 212, 82);
+    flex-shrink: 0;
 }
 
 .about-footer {
-  margin-top: 20px;
-  font-weight: bold;
-  color: #444;
+    font-size: 16px;
+    font-weight: 600;
+    color: rgb(212, 212, 82);
+    margin-top: 35px;
+    text-align: center;
+    font-style: italic;
+}
+
+/* ======================================================= */
+/* 430px (iPhone 14 Pro Max) ЖАНА ТЕЛЕФОНДОР ҮЧҮН АДАПТИВКА */
+/* ======================================================= */
+
+@media (max-width: 480px) {
+    .about {
+        padding: 30px 16px; /* Телефондо сырткы боштуктарды азайтабыз */
+    }
+
+    .about-title {
+        font-size: 26px; /* Башкы тема телефонго ылайыктуу чакан болот */
+        margin-bottom: 15px;
+        text-align: center; /* Телефондо ортодо турганы сулуу көрүнөт */
+    }
+
+    .about-subtitle {
+        font-size: 20px; /* Ички темалар кичирейет */
+        margin-top: 25px;
+        margin-bottom: 12px;
+    }
+
+    .about-text {
+        font-size: 14px; /* Тексттин шрифти 14px — телефондо окуганга эң сонун */
+        line-height: 1.6;
+        margin-bottom: 15px;
+        text-align: left; /* Мобилдикте эки тарапка созуу (justify) сулуу эмес, солго түздөйбүз */
+    }
+
+    .about-features {
+        padding: 15px 15px; /* Ички боз блоктун паддингин кысабыз */
+        margin: 20px 0;
+        border-radius: 8px;
+    }
+
+    .about-features-title {
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+
+    .about-list {
+        gap: 10px; /* Тизмелердин ортосундагы аралык */
+    }
+
+    .about-list li {
+        font-size: 13.5px;
+    }
+
+    .about-footer {
+        font-size: 14px;
+        margin-top: 25px;
+        line-height: 1.5;
+    }
 }

@@ -7,77 +7,97 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import { Button } from '@mui/material';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import DeleteIcon from '@mui/icons-material/Delete';
-import AuthPage from '../pages/AuthPage';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import '../styles/CartPage.css';
 
 const CartPage = () => {
-    const location = useLocation()
-    const [showModal, setShowModal] = React.useState(false)
-    
+    const location = useLocation();
+    const navigate = useNavigate();
+    const [showModal, setShowModal] = React.useState(false);
+    const [customerName, setCustomerName] = React.useState("");
+    const [customerPhone, setCustomerPhone] = React.useState("");
 
     const [cart, setCart] = React.useState(
       JSON.parse(localStorage.getItem('cart')) || []
-    )
+    );
+
+    const currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+    const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.email === 'zajnagultilebajeva@gmail.com');
 
     const increment = (id) => {
       const updated = cart.map(item =>
         item.id === id
           ? { ...item, quantity: item.quantity + 1 }
           : item
-      )
-      setCart(updated)
-      localStorage.setItem('cart', JSON.stringify(updated))
-    }
+      );
+      setCart(updated);
+      localStorage.setItem('cart', JSON.stringify(updated));
+    };
 
     const decrement = (id) => {
       const updated = cart.map(item =>
         item.id === id && item.quantity > 1
           ? { ...item, quantity: item.quantity - 1 }
           : item
-      )
-      setCart(updated)
-      localStorage.setItem('cart', JSON.stringify(updated))
-    }
-    const removeItem = (id) => {
-      const updated = cart.filter(item => item.id !== id)
+      );
       setCart(updated);
-      localStorage.setItem('cart', JSON.stringify(updated))
-    }
+      localStorage.setItem('cart', JSON.stringify(updated));
+    };
+
+    const removeItem = (id) => {
+      const updated = cart.filter(item => item.id !== id);
+      setCart(updated);
+      localStorage.setItem('cart', JSON.stringify(updated));
+    };
+
     const clearCart = () => {
-      setCart([])
-      localStorage.removeItem('cart')
-    }
+      setCart([]);
+      localStorage.removeItem('cart');
+    };
+
     const buyProduct = () => {
-      const user = JSON.parse(localStorage.getItem("user"))
-      if (!user) {
-        setShowModal(true)
-        console.log("CLICKED BUY")
+      if (cart.length === 0) {
+        toast.warn("Себетчеңиз бош!");
+        return;
+      }
+      setShowModal(true);
+    };
+
+    const handleConfirmOrder = () => {
+      if (!customerName.trim() || !customerPhone.trim()) {
+        toast.error("Атыңызды жана телефон номериңизди толтуруңуз!");
         return;
       }
 
       const order = {
-        user: user,
+        id: Date.now().toString(), 
+        name: customerName,
+        phone: customerPhone,
         products: cart,
         total: totalPrice,
-      }
+        date: new Date().toLocaleString("ru-RU") 
+      };
 
-      const orders = JSON.parse(localStorage.getItem("orders")) || []
+      const orders = JSON.parse(localStorage.getItem("orders")) || [];
       orders.push(order);
       localStorage.setItem("orders", JSON.stringify(orders));
-
-      console.log("Сакталды:", order);
-
+      
       setCart([]);
-      localStorage.removeItem("cart")
-    }
+      localStorage.removeItem("cart");
+      setShowModal(false);
+      setCustomerName("");
+      setCustomerPhone("");
+
+      toast.success("Буйрутмаңыз ийгиликтүү кабыл алынды!");
+    };
         
     const totalPrice = cart.reduce(
       (acc, item) => acc + item.price * item.quantity,
       0
-    )
-
+    );
 
     return (
       <>
@@ -101,12 +121,12 @@ const CartPage = () => {
                     <img
                       src={product.images?.[0]}
                       alt="img"
-                      style={{ width: '50px', borderRadius: '50%' }}
+                      style={{ width: '80px', borderRadius: '10%', objectFit: 'cover'}}
                     />
                   </TableCell>
 
                   <TableCell align="right">{product.title}</TableCell>
-                  <TableCell align="right">{product.category?.name}</TableCell>
+                  <TableCell align="right">{product.category}</TableCell>
                   <TableCell align="right">{product.price} сом</TableCell>
 
                   <TableCell align="right">
@@ -143,26 +163,58 @@ const CartPage = () => {
         </TableContainer>
 
         <div className="sum_and_del">
-          <p className="total__price"
-             style={{marginRight: "40px"}}>
+          <p className="total__price" style={{marginRight: "40px"}}>
             Жалпы суммасы:  {totalPrice} сом
           </p>
 
           <Button variant="contained" color="error" onClick={clearCart}>
              Себетчени тазалоо
           </Button>
-          <Button variant="contained"  
-                  onClick={buyProduct}
-                  style={{marginLeft: "40px"}}>
+          <Button variant="contained" onClick={buyProduct} style={{marginLeft: "40px"}}>
              Сатып алуу
           </Button>
-          {showModal && (
-            <AuthPage onClose={() => setShowModal(false)} />
-          )}
           
-        </div>
-      </>
-    )
-}
+          {isAdmin && (
+            <Button variant="contained" onClick={() => navigate('/admin')} style={{marginLeft: "40px"}}>
+               Продукт тарыхча
+            </Button>
+          )}
 
-export default CartPage
+          {showModal && (
+            <div className="modal-overlay">
+              <div className="modal-card">
+                <h3 className="modal-title">Буйрутманы тариздөө</h3>
+                <p style={{ textAlign: 'center', color: '#555', margin: '0 0 15px 0' }}>
+                  Жалпы сумма: <strong>{totalPrice} сом</strong>
+                </p>
+                
+                <input 
+                  type="text" 
+                  placeholder="Атыңыз" 
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="modal-input"
+                />
+                
+                <input 
+                  type="text" 
+                  placeholder="Телефон номериңиз" 
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  className="modal-input"
+                />
+
+                <div className="modal-btn-group">
+                  <button onClick={handleConfirmOrder} className="modal-confirm-btn">Ырастоо</button>
+                  <button onClick={() => setShowModal(false)} className="modal-cancel-btn">Жабуу</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+        <ToastContainer autoClose={2000} position="top-center" />
+      </>
+    );
+};
+
+export default CartPage;

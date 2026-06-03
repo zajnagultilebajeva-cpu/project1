@@ -171,23 +171,46 @@
 // };
 
 // export default MainPage;
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
-import { Button } from '@mui/material';
+import { Button } from '@mui/material'
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCartOutlined';
-import { kepkaData } from '../data'; 
-import '../styles/MainPage.css';
+import { kepkaData } from '../data'
+import { collection, getDocs, query, orderBy, onSnapshot } from "firebase/firestore"
+import { db } from "../Firebase"
+import '../styles/MainPage.css'
+import { doc, deleteDoc } from "firebase/firestore"
+import { toast } from 'react-toastify';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddCardIcon from '@mui/icons-material/AddCard';
 
-const MainPage = ({ darkMode }) => {
+const MainPage = ({ darkMode, isAdmin}) => {
+    
     const chakyruu = useNavigate() 
     const [search, setSearch] = useState("")
-    const [category, setCategory] = useState(
-        localStorage.getItem("category") || "All"
-    )
-    
+    const [category, setCategory] = useState(localStorage.getItem("category") || "All")        
     const [filtered, setFiltered] = useState(kepkaData)
     const [cart, setCart] = useState(JSON.parse(localStorage.getItem('cart')) || [])
+    const [products, setProducts] = useState(() => {
+    const localData = localStorage.getItem("local_products");
+        if (!localData) {
+            localStorage.setItem("local_products", JSON.stringify(kepkaData));
+            return kepkaData;
+        }
+        const parsedData = JSON.parse(localData)
+        if (parsedData.length === 0) {
+            localStorage.setItem("local_products", JSON.stringify(kepkaData));
+            return kepkaData;
+        }
+        
+        return parsedData
+    })
+    const handleDeleteProduct = (productId) => {
+        const updatedProducts = products.filter(p => p.id?.toString() !== productId?.toString())
+        setProducts(updatedProducts)
+        localStorage.setItem("local_products", JSON.stringify(updatedProducts))
+        toast.success("Товар ийгиликтүү өчтү!")
+    }   
     useEffect(() => {
         if (darkMode) {
             document.body.classList.add("dark");
@@ -195,20 +218,22 @@ const MainPage = ({ darkMode }) => {
             document.body.classList.remove("dark");
         }
     }, [darkMode])
+
     useEffect(() => {
-        const result = kepkaData.filter(item => {
+        const allData = products; 
+
+        const result = allData.filter(item => {
             const matchSearch = item.description
-                .toLowerCase()
-                .includes(search.toLowerCase())
+                ?.toLowerCase()
+                .includes(search.toLowerCase());
 
-            const matchCategory =
-                category === "All" || item.category === category
+            const matchCategory = category === "All" || item.category === category;
 
-            return matchSearch && matchCategory
-        })
+            return matchSearch && matchCategory;
+        });
 
         setFiltered(result)
-    }, [search, category])
+    }, [search, category, products])
     
 
     useEffect(() => {
@@ -246,9 +271,9 @@ const MainPage = ({ darkMode }) => {
         }
         localStorage.setItem('cart', JSON.stringify(updatedCart))
         setCart(updatedCart)
-    };
+    }
 return (
-            <>
+        <>
              <section className="hero" >
                  <div id="slider">
                      <figure>
@@ -260,8 +285,19 @@ return (
                      </figure>
                  </div>
              </section>
-
              <main className='main'>
+                {isAdmin && (
+                     <div style={{ width: "100%", maxWidth: "1200px", margin: "0 auto 20px auto", display: "flex", justifyContent: "flex-end" }}>
+                         <Button 
+                             variant="contained" color="success"
+                             onClick={() => chakyruu('/create')} 
+                             startIcon={< AddCardIcon/>}
+                             style={{ backgroundColor: '#10b981', padding: '10px 20px', fontWeight: 'bold' }}
+                         >
+                             Жаңы товар кошуу 
+                         </Button>
+                     </div>
+                 )}
                  <div className="products">
                      {filtered.map(item => (
                         <div className="card" key={item.id}>
@@ -294,6 +330,23 @@ return (
                                     Себетчеге салуу
                                 </Button>
                             </div>
+                            
+                            
+                            {isAdmin && (
+                            <div className="admin-buttons" style={{ display: "flex", gap: "10px", marginTop: "10px", width: "300px" }}>
+                                <Button variant="outlined"
+                                        color='secondary'
+                                        onClick={() => chakyruu(`/edit/${item.id}`)}>
+                                    Өзгөртүү
+                                </Button>
+                                <Button variant="outlined" 
+                                        color="error"
+                                        startIcon={<DeleteIcon />}
+                                        onClick={() => handleDeleteProduct(item.id)}>
+                                        Өчүрүү
+                                </Button>
+                            </div>
+                            )}
                             
                         </div>
                     ))}
@@ -348,4 +401,4 @@ return (
     )
 }
 
-export default MainPage
+export default MainPage;

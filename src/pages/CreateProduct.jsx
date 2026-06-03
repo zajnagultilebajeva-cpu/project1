@@ -12,6 +12,7 @@ import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'; 
 import '../styles/CreatePage.css'
 import 'react-toastify/dist/ReactToastify.css'
+import { supabase } from '../supabase';
 
 const CreateProduct = () => {
   const [title, setTitle] = useState(() => localStorage.getItem('p_title') || '');
@@ -51,8 +52,8 @@ const CreateProduct = () => {
     setImage3('');
   };
 
-  // 🔥 LOCALSTORAGE-ГО ТОВАР КОШУУ (CREATE)
-  const handleCreateProduct = () => {
+  // 🔥 SUPABASE-КЕ ТОВАР КОШУУ (CREATE)
+  const handleCreateProduct = async () => {
     if (!title || !price || !description || !brand || !image1) {
       toast.error("Негизги талааларды толтуруңуз!")
       return;
@@ -63,24 +64,24 @@ const CreateProduct = () => {
       if (image2) imagesArray.push(image2);
       if (image3) imagesArray.push(image3);
 
-      // Маалымат объектиси
       const newProduct = {
-        id: "prod_" + Date.now(), // Ар бир товарга кайталанбас ID түзөбүз
+        id: Date.now(), // Уникалдуу сандык ID
         title,
         price: Number(price),
         description,
         brand,
         category,
-        images: imagesArray,
-        createdAt: new Date().toISOString()
+        images: imagesArray
       };
 
-      // Эски кошулган товарларды алып, үстүнө жаңысын кошобуз
-      const existingProducts = JSON.parse(localStorage.getItem("local_products")) || [];
-      const updatedProducts = [newProduct, ...existingProducts];
-      
-      // Кайра LocalStorage-го сактайбыз
-      localStorage.setItem("local_products", JSON.stringify(updatedProducts));
+      const { error } = await supabase
+        .from('products')
+        .insert([newProduct]);
+
+      if (error) {
+        toast.error("Базага сактоодо ката кетти: " + error.message);
+        return;
+      }
 
       toast.success("Товар ийгиликтүү кошулду! ")
       clearFormAndStorage() 

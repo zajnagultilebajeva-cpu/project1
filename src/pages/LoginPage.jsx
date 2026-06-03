@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import { supabase } from '../supabase'
 
 const LoginPage = () => {
   const [email, setEmail] = useState('')
@@ -11,49 +12,89 @@ const LoginPage = () => {
   const ADMIN_EMAIL = "zajnagultilebajeva@gmail.com"
   const ADMIN_PASSWORD = "kepka.kg"
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email || !password) {
       toast.warn('Бардык талааларды толтуруңуз!')
       return
     }
 
-    const trimmedEmail = email.trim();
+    const trimmedEmail = email.trim().toLowerCase();
 
-    if (trimmedEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      localStorage.setItem('email', trimmedEmail);
-      localStorage.setItem('currentUser', JSON.stringify({ role: 'admin', email: trimmedEmail }));
-      
-      toast.success('Куш келиңиз, Администратор!');
-      setTimeout(() => {
-        navigate('/base')
-      }, 1500);
-      return;
-    }
+    try {
+      if (trimmedEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+        const { data: existingAdmin } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', trimmedEmail)
+          .maybeSingle();
 
-    const existingUsers = JSON.parse(localStorage.getItem('registeredUsers')) || [];
-    const user = existingUsers.find(u => u.email === trimmedEmail && u.password === password);
+        if (!existingAdmin) {
+          await supabase
+            .from('users')
+            .insert([{ email: trimmedEmail, password: password, role: 'admin' }]);
+        }
 
-    if (user) {
-      localStorage.setItem('email', user.email);
-      localStorage.setItem('currentUser', JSON.stringify({ role: 'user', email: user.email }));
-      
-      toast.success('Ийгиликтүү кирдиңиз!');
-      setTimeout(() => {
-        navigate('/')
-      }, 1500);
-    } else {
-      
-      const newUser = { email: trimmedEmail, password: password, role: 'user' };
-      existingUsers.push(newUser);
-      localStorage.setItem('registeredUsers', JSON.stringify(existingUsers));
-      
-      localStorage.setItem('email', trimmedEmail);
-      localStorage.setItem('currentUser', JSON.stringify({ role: 'user', email: trimmedEmail }));
-      
-      toast.success('Жаңы колдонуучу катары катталдыңыз жана кирдиңиз!');
-      setTimeout(() => navigate('/'), 1500);
+        localStorage.setItem('email', trimmedEmail);
+        localStorage.setItem('currentUser', JSON.stringify({ role: 'admin', email: trimmedEmail }));
+        
+        toast.success('Куш келиңиз, Администратор!');
+        setTimeout(() => {
+          navigate('/base')
+          window.location.reload()
+        }, 1500);
+        return;
+      }
+
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', trimmedEmail)
+        .maybeSingle();
+
+      if (error) {
+        toast.error('Ката кетти: ' + error.message)
+        return
+      }
+
+      if (user) {
+        if (user.password === password) {
+          localStorage.setItem('email', user.email);
+          localStorage.setItem('currentUser', JSON.stringify({ role: user.role || 'user', email: user.email }));
+          
+          toast.success('Ийгиликтүү кирдиңиз!');
+          setTimeout(() => {
+            navigate('/')
+            window.location.reload()
+          }, 1500);
+        } else {
+          toast.error('Купуя сөз туура эмес!');
+        }
+      } else {
+        const newUser = { email: trimmedEmail, password: password, role: 'user' };
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert([newUser]);
+
+        if (insertError) {
+          toast.error('Каттоодо ката кетти: ' + insertError.message);
+          return;
+        }
+
+        localStorage.setItem('email', trimmedEmail);
+        localStorage.setItem('currentUser', JSON.stringify({ role: 'user', email: trimmedEmail }));
+        
+        toast.success('Жаңы колдонуучу катары катталдыңыз жана кирдиңиз!');
+        setTimeout(() => {
+          navigate('/')
+          window.location.reload()
+        }, 1500);
+      }
+    } catch (err) {
+      toast.error('Сервер менен байланышууда ката кетти!');
+      console.error(err);
     }
   }
+
   
   return (
     <div style={styles.container}>

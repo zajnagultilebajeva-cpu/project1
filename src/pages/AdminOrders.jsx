@@ -7,19 +7,45 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import { Button } from '@mui/material';
+import { supabase } from '../supabase';
 
 const AdminOrders = ({ darkMode }) => {
     const [orders, setOrders] = React.useState([]);
 
+    const fetchOrders = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('orders')
+                .select('*')
+                .order('id', { ascending: false });
+            if (error) {
+                console.error(error);
+            } else {
+                setOrders(data || []);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     React.useEffect(() => {
-        const fetchedOrders = JSON.parse(localStorage.getItem('orders')) || [];
-        setOrders(fetchedOrders);
+        fetchOrders();
     }, []);
 
-    const deleteOrder = (id) => {
-        const updated = orders.filter(order => order.id !== id);
-        setOrders(updated);
-        localStorage.setItem('orders', JSON.stringify(updated));
+    const deleteOrder = async (id) => {
+        try {
+            const { error } = await supabase
+                .from('orders')
+                .delete()
+                .eq('id', id);
+            if (error) {
+                alert("Өчүрүүдө ката кетти: " + error.message);
+            } else {
+                setOrders(orders.filter(order => order.id !== id));
+            }
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     return (

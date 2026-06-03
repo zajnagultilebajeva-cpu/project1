@@ -81,13 +81,15 @@ import { Button } from '@mui/material'
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCartOutlined'
 import { useNavigate } from 'react-router-dom'
 import '../styles/DetailPage.css'
-import { kepkaData } from '../data'
+import { supabase } from '../supabase'
+import CircularProgress from '@mui/material/CircularProgress'
 
 const DetailPage = () => {
     const { id } = useParams()
     const chakyruu = useNavigate()
+    const [product, setProduct] = useState(null)
+    const [loading, setLoading] = useState(true)
     const [selectImg, setSelectImg] = useState(null)
-    const product = kepkaData.find(item => item.id === Number(id))
     const [cart, setCart] = useState(JSON.parse(localStorage.getItem('cart')) || [])
 
     const handleClickImage = (images) => {
@@ -95,12 +97,34 @@ const DetailPage = () => {
     }
     
     useEffect(() => {
-        if (product) {
-            setSelectImg(product.images[0])
+        const fetchProduct = async () => {
+            try {
+                setLoading(true)
+                const { data, error } = await supabase
+                    .from('products')
+                    .select('*')
+                    .eq('id', id)
+                    .maybeSingle()
+
+                if (error) {
+                    console.error(error)
+                } else if (data) {
+                    setProduct(data)
+                    if (data.images && data.images.length > 0) {
+                        setSelectImg(data.images[0])
+                    }
+                }
+            } catch (err) {
+                console.error(err)
+            } finally {
+                setLoading(false)
+            }
         }
-    }, [product])
+        fetchProduct()
+    }, [id])
 
     const addToCart = (item) => { 
+        if (!item) return
         const currentCart = JSON.parse(localStorage.getItem('cart')) || []
         const exist = currentCart.find(prod => prod.id === item.id)
         let updatedCart
@@ -116,6 +140,23 @@ const DetailPage = () => {
         localStorage.setItem('cart', JSON.stringify(updatedCart))
         setCart(updatedCart)
     };
+
+    if (loading) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+                <CircularProgress size="3rem" aria-label="Жүктөлүүдө…" />
+            </div>
+        )
+    }
+
+    if (!product) {
+        return (
+            <div style={{ padding: '40px', textAlign: 'center' }}>
+                <h2>Товар табылган жок!</h2>
+                <Button variant="contained" onClick={() => chakyruu('/')}>Башкы бетке кайт</Button>
+            </div>
+        )
+    }
 
     return (
         <div className='product__details'>

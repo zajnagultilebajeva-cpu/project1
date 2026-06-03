@@ -12,6 +12,7 @@ import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'; // Артка кайтуу баскычы үчүн
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/CreatePage.css' // Крит барагынын стили колдонулат
+import { supabase } from '../supabase';
 
 export default function EditProduct() {
   const { id } = useParams(); 
@@ -28,33 +29,41 @@ export default function EditProduct() {
   const [image2, setImage2] = useState(() => localStorage.getItem(`edit_image2_${id}`) || "");
   const [image3, setImage3] = useState(() => localStorage.getItem(`edit_image3_${id}`) || "");
 
-  // 🛠️ МААЛЫМАТТАРДЫ АВТОМАТТЫК ТҮРДӨ ТОЛТУРУУ (LOCALSTORAGE'ДАН ИЗДӨӨ)
+  // 🛠️ МААЛЫМАТТАРДЫ АВТОМАТТЫК ТҮРДӨ ТОЛТУРУУ (SUPABASE'ДЕН ИЗДӨӨ)
   useEffect(() => {
-    // Жалпы товарлардын тизмесин алабыз
-    const allProducts = JSON.parse(localStorage.getItem("local_products")) || [];
-    
-    // Ошол тизмеден бизге керек болгон ID'деги товарды табабыз
-    const currentProduct = allProducts.find(p => p.id?.toString() === id?.toString());
+    const fetchProduct = async () => {
+      try {
+        const { data: currentProduct, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
 
-    if (currentProduct) {
-      // Эгер черновикте (localStorage) сакталган маалымат жок болсо, товардын өзүнүн маалыматын коёбуз
-      if (!localStorage.getItem(`edit_title_${id}`)) setTitle(currentProduct.title || currentProduct.name || "");
-      if (!localStorage.getItem(`edit_price_${id}`)) setPrice(currentProduct.price || "");
-      if (!localStorage.getItem(`edit_description_${id}`)) setDescription(currentProduct.description || "");
-      if (!localStorage.getItem(`edit_brand_${id}`)) setBrand(currentProduct.brand || "");
-      if (!localStorage.getItem(`edit_category_${id}`)) setCategory(currentProduct.category || "All");
-      
-      // Сүрөттөрдү текшерүү (массив же жөнөкөй string болушу мүмкүн)
-      if (currentProduct.images && Array.isArray(currentProduct.images)) {
-        if (!localStorage.getItem(`edit_image1_${id}`)) setImage1(currentProduct.images[0] || "");
-        if (!localStorage.getItem(`edit_image2_${id}`)) setImage2(currentProduct.images[1] || "");
-        if (!localStorage.getItem(`edit_image3_${id}`)) setImage3(currentProduct.images[2] || "");
-      } else if (currentProduct.image) {
-        if (!localStorage.getItem(`edit_image1_${id}`)) setImage1(currentProduct.image || "");
+        if (error) {
+          toast.error("Ката кетти: " + error.message);
+          return;
+        }
+
+        if (currentProduct) {
+          if (!localStorage.getItem(`edit_title_${id}`)) setTitle(currentProduct.title || "");
+          if (!localStorage.getItem(`edit_price_${id}`)) setPrice(currentProduct.price || "");
+          if (!localStorage.getItem(`edit_description_${id}`)) setDescription(currentProduct.description || "");
+          if (!localStorage.getItem(`edit_brand_${id}`)) setBrand(currentProduct.brand || "");
+          if (!localStorage.getItem(`edit_category_${id}`)) setCategory(currentProduct.category || "All");
+          
+          if (currentProduct.images && Array.isArray(currentProduct.images)) {
+            if (!localStorage.getItem(`edit_image1_${id}`)) setImage1(currentProduct.images[0] || "");
+            if (!localStorage.getItem(`edit_image2_${id}`)) setImage2(currentProduct.images[1] || "");
+            if (!localStorage.getItem(`edit_image3_${id}`)) setImage3(currentProduct.images[2] || "");
+          }
+        } else {
+          toast.error("Мындай товар табылган жок!");
+        }
+      } catch (err) {
+        console.error(err);
       }
-    } else {
-      toast.error("Мындай товар табылган жок!");
-    }
+    };
+    fetchProduct();
   }, [id]);
 
   // Колдонуучу жазып жаткан учурда черновикке сактап туруу
@@ -74,8 +83,8 @@ export default function EditProduct() {
     keys.forEach(key => localStorage.removeItem(key));
   };
 
-  // 🛠️ ӨЗГӨРҮҮЛӨРДҮ LOCALSTORAGE-ГО САКТОО (UPDATE)
-  const handleUpdate = () => {
+  // 🛠️ ӨЗГӨРҮҮЛӨРДҮ SUPABASE-КЕ САКТОО (UPDATE)
+  const handleUpdate = async () => {
     if (!title || !price || !description || !brand || !image1) {
       toast.error("Негизги талааларды толтуруңуз!");
       return;
@@ -86,33 +95,28 @@ export default function EditProduct() {
       if (image2) imagesArray.push(image2);
       if (image3) imagesArray.push(image3);
 
-      // Бардык товарларды алып келебиз
-      const allProducts = JSON.parse(localStorage.getItem("local_products")) || [];
-      
-      // Массивдин ичинен эски товарды таап, анын маалыматтарын жаңылайбыз
-      const updatedProducts = allProducts.map(p => {
-        if (p.id?.toString() === id?.toString()) {
-          return {
-            ...p, // эски кошумча маалыматтары (мисалы, id) сакталат
-            title,
-            price: Number(price),
-            description,
-            brand,
-            category,
-            images: imagesArray,
-            image: image1 // Эски кодуңуз менен коопсуз иштеш үчүн жалгыз сүрөттү да жаңыртып коёбуз
-          };
-        }
-        return p; // калган товарларга тийбейбиз
-      });
+      const updatedProduct = {
+        title,
+        price: Number(price),
+        description,
+        brand,
+        category,
+        images: imagesArray
+      };
 
-      // Жаңыланган массивди кайра Локалдык сактагычка жазабыз
-      localStorage.setItem("local_products", JSON.stringify(updatedProducts));
+      const { error } = await supabase
+        .from('products')
+        .update(updatedProduct)
+        .eq('id', id);
+
+      if (error) {
+        toast.error("Жаңыртууда ката кетти: " + error.message);
+        return;
+      }
       
       toast.success("Товар ийгиликтүү өзгөрдү!");
       clearLocalStorage();
 
-      // Навигацияны башкы бетке ("/") багыттайбыз, анткени бизде азыр башкы бет маанилүү
       setTimeout(() => navigate("/"), 1300);
     } catch (err) {
       console.error(err);

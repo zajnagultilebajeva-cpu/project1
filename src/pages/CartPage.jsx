@@ -12,6 +12,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/CartPage.css';
+import { supabase } from '../supabase';
 
 const CartPage = () => {
     const location = useLocation();
@@ -66,7 +67,7 @@ const CartPage = () => {
       setShowModal(true);
     };
 
-    const handleConfirmOrder = () => {
+    const handleConfirmOrder = async () => {
       if (!customerName.trim() || !customerPhone.trim()) {
         toast.error("Атыңызды жана телефон номериңизди толтуруңуз!");
         return;
@@ -81,17 +82,27 @@ const CartPage = () => {
         date: new Date().toLocaleString("ru-RU") 
       };
 
-      const orders = JSON.parse(localStorage.getItem("orders")) || [];
-      orders.push(order);
-      localStorage.setItem("orders", JSON.stringify(orders));
-      
-      setCart([]);
-      localStorage.removeItem("cart");
-      setShowModal(false);
-      setCustomerName("");
-      setCustomerPhone("");
+      try {
+        const { error } = await supabase
+          .from('orders')
+          .insert([order]);
 
-      toast.success("Буйрутмаңыз ийгиликтүү кабыл алынды!");
+        if (error) {
+          toast.error("Буйрутманы сактоодо ката кетти: " + error.message);
+          return;
+        }
+
+        setCart([]);
+        localStorage.removeItem("cart");
+        setShowModal(false);
+        setCustomerName("");
+        setCustomerPhone("");
+
+        toast.success("Буйрутмаңыз ийгиликтүү кабыл алынды!");
+      } catch (err) {
+        toast.error("Сервер менен байланыш үзүлдү!");
+        console.error(err);
+      }
     };
         
     const totalPrice = cart.reduce(

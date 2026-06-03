@@ -176,41 +176,83 @@ import { useNavigate } from "react-router-dom";
 import { Button } from '@mui/material'
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCartOutlined';
 import { kepkaData } from '../data'
-import { collection, getDocs, query, orderBy, onSnapshot } from "firebase/firestore"
-import { db } from "../Firebase"
+import { supabase } from '../supabase'
 import '../styles/MainPage.css'
-import { doc, deleteDoc } from "firebase/firestore"
 import { toast } from 'react-toastify';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddCardIcon from '@mui/icons-material/AddCard';
+import CircularProgress from '@mui/material/CircularProgress'
 
 const MainPage = ({ darkMode, isAdmin}) => {
     
     const chakyruu = useNavigate() 
     const [search, setSearch] = useState("")
     const [category, setCategory] = useState(localStorage.getItem("category") || "All")        
-    const [filtered, setFiltered] = useState(kepkaData)
+    const [filtered, setFiltered] = useState([])
     const [cart, setCart] = useState(JSON.parse(localStorage.getItem('cart')) || [])
-    const [products, setProducts] = useState(() => {
-    const localData = localStorage.getItem("local_products");
-        if (!localData) {
-            localStorage.setItem("local_products", JSON.stringify(kepkaData));
-            return kepkaData;
+    const [products, setProducts] = useState([])
+    const [loading, setLoading] = useState(true)
+
+    const fetchProducts = async () => {
+        try {
+            setLoading(true)
+            const { data, error } = await supabase
+                .from('products')
+                .select('*')
+                .order('id', { ascending: true });
+
+            if (error) {
+                console.error(error);
+                toast.error("Маалыматтарды жүктөөдө ката кетти!");
+            } else if (data && data.length > 0) {
+                setProducts(data);
+            } else {
+                // Эгер база бош болсо, баштапкы маалыматтар менен толтурабыз
+                const { error: seedError } = await supabase
+                    .from('products')
+                    .insert(kepkaData);
+
+                if (seedError) {
+                    console.error("Маалымат базасын толтурууда ката:", seedError);
+                    setProducts(kepkaData);
+                } else {
+                    const { data: seededData } = await supabase
+                        .from('products')
+                        .select('*')
+                        .order('id', { ascending: true });
+                    setProducts(seededData || kepkaData);
+                }
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false)
         }
-        const parsedData = JSON.parse(localData)
-        if (parsedData.length === 0) {
-            localStorage.setItem("local_products", JSON.stringify(kepkaData));
-            return kepkaData;
+    };
+
+    const handleDeleteProduct = async (productId) => {
+        try {
+            const { error } = await supabase
+                .from('products')
+                .delete()
+                .eq('id', productId);
+
+            if (error) {
+                toast.error("Товарды өчүрүүдө ката кетти: " + error.message);
+            } else {
+                setProducts(products.filter(p => p.id?.toString() !== productId?.toString()))
+                toast.success("Товар ийгиликтүү өчтү!")
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error("Сервер менен байланышуу үзүлдү!");
         }
-        
-        return parsedData
-    })
-    const handleDeleteProduct = (productId) => {
-        const updatedProducts = products.filter(p => p.id?.toString() !== productId?.toString())
-        setProducts(updatedProducts)
-        localStorage.setItem("local_products", JSON.stringify(updatedProducts))
-        toast.success("Товар ийгиликтүү өчтү!")
     }   
+
+    useEffect(() => {
+        fetchProducts();
+    }, []);
+
     useEffect(() => {
         if (darkMode) {
             document.body.classList.add("dark");
@@ -298,16 +340,22 @@ return (
                          </Button>
                      </div>
                  )}
-                 <div className="products">
-                     {filtered.map(item => (
-                        <div className="card" key={item.id}>
-                            
-                            <img
-                                src={item.images[0]}
-                                alt={item.title}
-                                className='card_image'
-                                onClick={() => chakyruu(`/detail/${item.id}`)}
-                            />
+                  <div className="products">
+                      {loading ? (
+                          <div style={{ display: 'flex', justifyContent: 'center', width: '100%', padding: '50px 0' }}>
+                              <CircularProgress size="3rem" aria-label="Товарлор жүктөлүүдө…" />
+                          </div>
+                      ) : filtered.length === 0 ? (
+                          <p style={{ textAlign: 'center', width: '100%', fontSize: '18px', gridColumn: '1/-1' }}>Товарлар табылган жок.</p>
+                      ) : filtered.map(item => (
+                         <div className="card" key={item.id}>
+                             
+                             <img
+                                 src={item.images?.[0]}
+                                 alt={item.title}
+                                 className='card_image'
+                                 onClick={() => chakyruu(`/detail/${item.id}`)}
+                             />
 
                             <h3 className='card_title'>{item.title}</h3>
 

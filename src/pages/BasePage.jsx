@@ -43,80 +43,122 @@
 import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { supabase } from '../supabase';
 
 const AdminPanel = () => {
-  // Кадрлардын же товарлардын тизмеси
   const [items, setItems] = useState([]);
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
-  const [editId, setEditId] = useState(null); // Түзөтүлүп жаткан кадрдын IDси
+  const [editId, setEditId] = useState(null); 
+  const [loading, setLoading] = useState(true);
 
-  // Баракча ачылганда localStorage'дан маалыматтарды окуу
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('id', { ascending: false });
+
+      if (error) {
+        toast.error('Товарларды жүктөөдө ката кетти: ' + error.message);
+      } else {
+        setItems(data || []);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const savedItems = JSON.parse(localStorage.getItem('products')) || [];
-    setItems(savedItems);
+    fetchProducts();
   }, []);
 
-  // 1. КОШУУ ЖАНА ӨЗГӨРТҮҮ ФУНКЦИЯСЫ (Create & Update)
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     if (!name || !price) {
       toast.warn('Бардык талааларды толтуруңуз!');
       return;
     }
 
-    let updatedItems;
+    try {
+      if (editId) {
+        const { error } = await supabase
+          .from('products')
+          .update({ title: name, price: Number(price) })
+          .eq('id', editId);
 
-    if (editId) {
-      // ЭГЕР ӨЗГӨРТҮҮ (EDIT) БОЛУП ЖАТСА:
-      updatedItems = items.map(item => 
-        item.id === editId ? { ...item, name, price } : item
-      );
-      toast.success('Ийгиликтүү өзгөртүлдү!');
-      setEditId(null);
-    } else {
-      // ЭГЕР ЖАҢЫ КОШУУ (CREATE) БОЛУП ЖАТСА:
-      const newItem = {
-        id: Date.now(), // уникалдуу ID
-        name,
-        price
-      };
-      updatedItems = [...items, newItem];
-      toast.success('Жаңы кадр кошулду!');
+        if (error) {
+          toast.error('Өзгөртүүдө ката кетти: ' + error.message);
+          return;
+        }
+
+        toast.success('Ийгиликтүү өзгөртүлдү!');
+        setEditId(null);
+      } else {
+        const newItem = {
+          id: Date.now(),
+          title: name,
+          price: Number(price),
+          description: "Админ панелден кошулган товар",
+          brand: "Бренд",
+          category: "All",
+          images: ["https://marketplace.canva.com/EAHDMRox-Pg/1/0/1600w/canva-beige-and-brown-minimalist-elegant-fashion-big-sale-banner-yDZHcGnWFx0.jpg"]
+        };
+
+        const { error } = await supabase
+          .from('products')
+          .insert([newItem]);
+
+        if (error) {
+          toast.error('Кошууда ката кетти: ' + error.message);
+          return;
+        }
+
+        toast.success('Жаңы товар кошулду!');
+      }
+
+      setName('');
+      setPrice('');
+      fetchProducts();
+    } catch (err) {
+      console.error(err);
+      toast.error('Ката кетти!');
     }
-
-    setItems(updatedItems);
-    localStorage.setItem('products', JSON.stringify(updatedItems));
-    
-    // Форманы тазалоо
-    setName('');
-    setPrice('');
-    
-    // Башка компоненттер да дароо билиши үчүн жаңылоо окуясын жөнөтөбүз
-    window.dispatchEvent(new Event('storage-changed'));
   };
 
-  // 2. ТҮЗӨТҮҮ РЕЖИМИНЕ ӨТКӨРҮҮ (Edit режимине даярдоо)
   const handleEdit = (item) => {
     setEditId(item.id);
-    setName(item.name);
-    setPrice(item.price);
+    setName(item.title || item.name || '');
+    setPrice(item.price || '');
   };
 
-  // 3. ӨЧҮРҮҮ ФУНКЦИЯСЫ (Delete)
-  const handleDelete = (id) => {
-    const filteredItems = items.filter(item => item.id !== id);
-    setItems(filteredItems);
-    localStorage.setItem('products', JSON.stringify(filteredItems));
-    toast.error('Кадр өчүрүлдү!');
-    window.dispatchEvent(new Event('storage-changed'));
+  const handleDelete = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        toast.error('Өчүрүүдө ката кетти: ' + error.message);
+        return;
+      }
+
+      toast.error('Товар өчүрүлдү!');
+      fetchProducts();
+    } catch (err) {
+      console.error(err);
+      toast.error('Ката кетти!');
+    }
   };
 
   return (
     <div style={{ padding: '40px', maxWidth: '800px', margin: '0 auto' }}>
-      <h2>Админ Панель (Товарларды / Кадрларды башкаруу)</h2>
+      <h2>Админ Панель (Товарларды башкаруу)</h2>
       
-      {/* Форма: Кошуу же Өзгөртүү үчүн */}
       <form onSubmit={handleSave} style={{ display: 'flex', gap: '10px', marginBottom: '30px' }}>
         <input 
           type="text" 
@@ -126,8 +168,8 @@ const AdminPanel = () => {
           style={{ padding: '10px', flex: 1 }}
         />
         <input 
-          type="text" 
-          placeholder="Баасы же Маалыматы" 
+          type="number" 
+          placeholder="Баасы" 
           value={price} 
           onChange={(e) => setPrice(e.target.value)}
           style={{ padding: '10px', flex: 1 }}
@@ -137,31 +179,35 @@ const AdminPanel = () => {
         </button>
       </form>
 
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ backgroundColor: '#f3f4f6', textAlign: 'left' }}>
-            <th style={{ padding: '10px', border: '1px solid #ddd' }}>Аталышы</th>
-            <th style={{ padding: '10px', border: '1px solid #ddd' }}>Баасы / Маалыматы</th>
-            <th style={{ padding: '10px', border: '1px solid #ddd' }}>Аракеттер</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map(item => (
-            <tr key={item.id}>
-              <td style={{ padding: '10px', border: '1px solid #ddd' }}>{item.name}</td>
-              <td style={{ padding: '10px', border: '1px solid #ddd' }}>{item.price}</td>
-              <td style={{ padding: '10px', border: '1px solid #ddd', gap: '10px', display: 'flex' }}>
-                <button onClick={() => handleEdit(item)} style={{ backgroundColor: '#3b82f6', color: '#fff', border: 'none', padding: '5px 10px', cursor: 'pointer' }}>
-                  Edit
-                </button>
-                <button onClick={() => handleDelete(item.id)} style={{ backgroundColor: '#ef4444', color: '#fff', border: 'none', padding: '5px 10px', cursor: 'pointer' }}>
-                  Delete
-                </button>
-              </td>
+      {loading ? (
+        <p>Жүктөлүүдө...</p>
+      ) : (
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ backgroundColor: '#f3f4f6', textAlign: 'left' }}>
+              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Аталышы</th>
+              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Баасы (сом)</th>
+              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Аракеттер</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {items.map(item => (
+              <tr key={item.id}>
+                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{item.title}</td>
+                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{item.price}</td>
+                <td style={{ padding: '10px', border: '1px solid #ddd', gap: '10px', display: 'flex' }}>
+                  <button onClick={() => handleEdit(item)} style={{ backgroundColor: '#3b82f6', color: '#fff', border: 'none', padding: '5px 10px', cursor: 'pointer' }}>
+                    Edit
+                  </button>
+                  <button onClick={() => handleDelete(item.id)} style={{ backgroundColor: '#ef4444', color: '#fff', border: 'none', padding: '5px 10px', cursor: 'pointer' }}>
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
       <ToastContainer autoClose={2000} position="top-center" />
     </div>
   );
